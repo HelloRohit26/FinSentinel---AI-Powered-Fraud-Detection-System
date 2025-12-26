@@ -131,7 +131,7 @@ Simply open `index.html` in your web browser.
 
 ## 🖼️ Dashboard Preview
 
-> *Add screenshots here by placing images in an `assets` folder and linking them.*
+![Dashboard Screenshot](assets/dashboard.png)
 
 **Normal State:**
 System monitors transactions. Green indicators.
