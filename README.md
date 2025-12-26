@@ -1,4 +1,7 @@
+![FinSentinel Banner](https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2670&auto=format&fit=crop)
+
 # 🛡️ FinSentinel - AI-Powered Fraud Detection System
+
 
 ![FinSentinel Banner](https://img.shields.io/badge/FinSentinel-AI%20Fraud%20System-blue?style=for-the-badge&logo=google-cloud)
 
@@ -12,13 +15,13 @@ The system consists of three main components: a Data Producer, a Real-time Analy
 
 ```mermaid
 graph TD
-    A[Producer (producer.py)] -->|JSON Stream| B(Kafka Topic: transactions)
-    B --> C[Backend Server (server.py)]
-    C -->|1. Extract Features| D[ML Model (Isolation Forest)]
-    D -->|2. Score Transaction| C
-    C -->|3. If Suspicious| E[Google Gemini AI]
-    E -->|4. Security Report| C
-    C -->|5. WebSocket| F[Frontend Dashboard (index.html)]
+    A["Producer (producer.py)"] -->|JSON Stream| B("Kafka Topic: transactions")
+    B --> C["Backend Server (server.py)"]
+    C -->|"1. Extract Features"| D["ML Model (Isolation Forest)"]
+    D -->|"2. Score Transaction"| C
+    C -->|"3. If Suspicious"| E["Google Gemini AI"]
+    E -->|"4. Security Report"| C
+    C -->|"5. WebSocket"| F["Frontend Dashboard (index.html)"]
     subgraph Infrastructure
     B
     Z[Zookeeper]
