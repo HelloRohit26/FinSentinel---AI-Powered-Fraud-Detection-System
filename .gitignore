@@ -1,0 +1,26 @@
+# --- Python Basics ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual Environment (Crucial) ---
+# Ignores the heavy library folder
+venv/
+env/
+.venv/
+
+# --- Environment Variables (Security) ---
+# NEVER commit your API keys to GitHub
+.env
+
+# --- IDE Settings ---
+.vscode/
+.idea/
+
+# --- Project Artifacts ---
+# Ignore the trained model (users should generate their own by running train_model.py)
+*.pkl
+
+# --- OS Generated Files ---
+.DS_Store
+Thumbs.db

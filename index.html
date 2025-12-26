@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>FinSentinel Mission Control</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-dark": "#0b0f19", /* Darker, deeper black */
+                        "surface-dark": "#151b2b",
+                        "border-dark": "#2d3748",
+                        "danger": "#ef4444",
+                        "success": "#0bda5e",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"], "mono": ["ui-monospace", "monospace"] },
+                    animation: { 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Cyberpunk Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #135bec; }
+        
+        .glass-panel {
+            background: rgba(21, 27, 43, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(45, 55, 72, 0.5);
+        }
+        
+        /* Modal Animation */
+        .modal-enter { animation: modalIn 0.3s ease-out forwards; }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: #0bda5e;
+            opacity: 0.5;
+            animation: scan 3s linear infinite;
+            box-shadow: 0 0 10px #0bda5e;
+        }
+        @keyframes scan {
+            0% { transform: translateY(-100px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(300px); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white font-display overflow-hidden h-screen flex flex-col selection:bg-primary selection:text-white">
+
+    <div id="login-screen" class="fixed inset-0 z-[100] bg-background-dark flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="absolute inset-0 bg-[url('https://media.giphy.com/media/U3qYN8S0j3bpK/giphy.gif')] opacity-5 bg-cover"></div>
+        <div class="relative z-10 w-full max-w-md p-8 glass-panel rounded-2xl shadow-2xl border border-primary/30">
+            <div class="flex justify-center mb-6">
+                <div class="p-3 bg-primary/20 rounded-full">
+                    <span class="material-symbols-outlined text-4xl text-primary">shield_lock</span>
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold text-center mb-2 tracking-tight">FinSentinel v2.0</h2>
+            <p class="text-slate-400 text-center mb-8 text-sm">Secure Fraud Detection Environment</p>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Agent ID</label>
+                    <input type="text" value="admin_01" class="w-full bg-black/40 border border-border-dark rounded p-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Passkey</label>
+                    <input type="password" value="********" class="w-full bg-black/40 border border-border-dark rounded p-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono" />
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-primary/25 mt-4 group">
+                    <span class="group-hover:hidden">AUTHENTICATE</span>
+                    <span class="hidden group-hover:inline-block">ACCESS SYSTEM &rarr;</span>
+                </button>
+            </form>
+            <div class="mt-6 flex justify-center gap-4 text-xs text-slate-500 font-mono">
+                <span>ENCRYPTION: AES-256</span>
+                <span>•</span>
+                <span>SERVER: US-EAST-1</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-logs" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center backdrop-blur-sm" onclick="closeModal('modal-logs')">
+        <div class="w-2/3 h-3/4 glass-panel rounded-xl flex flex-col overflow-hidden modal-enter" onclick="event.stopPropagation()">
+            <div class="p-4 border-b border-border-dark flex justify-between items-center bg-surface-dark">
+                <h3 class="font-bold flex items-center gap-2"><span class="material-symbols-outlined text-slate-400">history</span> System Logs</h3>
+                <button onclick="closeModal('modal-logs')" class="hover:text-white text-slate-500"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="flex-1 overflow-auto p-4 font-mono text-sm space-y-2 text-slate-300">
+                <div class="flex gap-4 border-b border-white/5 pb-2"><span class="text-slate-500">10:41:00</span> <span class="text-primary">INFO</span> System health check initiated. Status: Nominal.</div>
+                <div class="flex gap-4 border-b border-white/5 pb-2"><span class="text-slate-500">10:40:45</span> <span class="text-warning">WARN</span> Latency spike detected in Kafka topic 'transactions'.</div>
+                <div class="flex gap-4 border-b border-white/5 pb-2"><span class="text-slate-500">10:39:22</span> <span class="text-primary">INFO</span> Model v4.2 loaded successfully to inference engine.</div>
+                <div class="flex gap-4 border-b border-white/5 pb-2"><span class="text-slate-500">10:35:10</span> <span class="text-success">AUTH</span> User Admin_01 logged in from 192.168.1.5.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-rules" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center backdrop-blur-sm" onclick="closeModal('modal-rules')">
+        <div class="w-[500px] glass-panel rounded-xl overflow-hidden modal-enter" onclick="event.stopPropagation()">
+            <div class="p-4 border-b border-border-dark bg-surface-dark flex justify-between">
+                <h3 class="font-bold">AI Rules Engine Configuration</h3>
+                <button onclick="closeModal('modal-rules')" class="text-slate-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-bold">Max Transaction Velocity</p>
+                        <p class="text-xs text-slate-400">Flag if > 3 txns in 1 min</p>
+                    </div>
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer text-primary focus:ring-0"/>
+                        <label class="toggle-label block overflow-hidden h-6 rounded-full bg-primary cursor-pointer"></label>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-bold">Geo-Fencing Lock</p>
+                        <p class="text-xs text-slate-400">Auto-freeze cross-continent txns</p>
+                    </div>
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer text-primary focus:ring-0"/>
+                        <label class="toggle-label block overflow-hidden h-6 rounded-full bg-primary cursor-pointer"></label>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-bold mb-2">Risk Threshold (Sensitivity)</p>
+                    <input type="range" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary" min="1" max="100" value="85">
+                    <div class="flex justify-between text-xs text-slate-400 mt-1"><span>Low</span><span>High (85%)</span></div>
+                </div>
+                <button class="w-full py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-bold">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="flex items-center justify-between border-b border-border-dark bg-surface-dark px-6 py-3 shrink-0 z-20">
+        <div class="flex items-center gap-4">
+            <div class="size-8 rounded bg-primary/20 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined">shield_lock</span>
+            </div>
+            <div>
+                <h1 class="font-bold tracking-tight text-lg">MISSION CONTROL</h1>
+                <div class="flex items-center gap-2">
+                    <span class="flex size-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                    </span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-success">System Online</span>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="hidden md:flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-white/5">
+            <button class="px-4 py-1.5 rounded bg-white/10 text-white text-sm font-bold shadow-sm">Dashboard</button>
+            <button onclick="openModal('modal-logs')" class="px-4 py-1.5 rounded text-slate-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">Logs</button>
+            <button onclick="openModal('modal-rules')" class="px-4 py-1.5 rounded text-slate-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">Rules Engine</button>
+            <button class="px-4 py-1.5 rounded text-slate-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">Settings</button>
+        </nav>
+
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <button onclick="toggleNotifs()" class="size-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center border border-slate-700 transition-colors">
+                    <span class="material-symbols-outlined text-sm">notifications</span>
+                    <span class="absolute top-0 right-0 size-2.5 bg-danger rounded-full border-2 border-surface-dark"></span>
+                </button>
+                <div id="notif-dropdown" class="absolute right-0 top-12 w-64 glass-panel rounded-lg shadow-xl hidden flex-col z-50">
+                    <div class="p-3 border-b border-white/10 text-xs font-bold uppercase text-slate-400">Notifications</div>
+                    <div class="p-2 space-y-1">
+                        <div class="p-2 hover:bg-white/5 rounded cursor-pointer text-xs">
+                            <p class="text-white font-bold">API Key Expiring</p>
+                            <p class="text-slate-500">Your AWS key rotates in 2 days.</p>
+                        </div>
+                        <div class="p-2 hover:bg-white/5 rounded cursor-pointer text-xs">
+                            <p class="text-white font-bold">New Version Available</p>
+                            <p class="text-slate-500">v2.1 ready for deployment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors">
+                <div class="size-6 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-[10px] font-bold">JD</div>
+                <span class="text-xs font-bold">Admin</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        
+        <div class="flex-1 flex flex-col p-6 min-w-0">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="glass-panel p-5 rounded-xl relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 text-white/5 group-hover:text-white/10 transition-colors transform rotate-12">
+                        <span class="material-symbols-outlined text-8xl">analytics</span>
+                    </div>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Processed</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="total-processed" class="text-3xl font-mono font-bold">0</span>
+                        <span class="text-xs text-success font-bold flex items-center"><span class="material-symbols-outlined text-[10px] mr-1">arrow_upward</span>12%</span>
+                    </div>
+                </div>
+                
+                <div class="glass-panel p-5 rounded-xl border-danger/30 relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 text-danger/10 transform rotate-12">
+                        <span class="material-symbols-outlined text-8xl">gpp_bad</span>
+                    </div>
+                    <p class="text-danger text-xs font-bold uppercase tracking-wider">Fraud Detected</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="fraud-detected" class="text-3xl font-mono font-bold text-white">0</span>
+                        <span class="text-xs text-danger font-bold">Live</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-5 rounded-xl relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 text-white/5 group-hover:text-white/10 transition-colors transform rotate-12">
+                        <span class="material-symbols-outlined text-8xl">payments</span>
+                    </div>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Avg Value</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="avg-tx-value" class="text-3xl font-mono font-bold">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mb-3 px-2">
+                <h2 class="font-bold flex items-center gap-2"><span class="material-symbols-outlined text-primary text-sm">monitor_heart</span> Real-Time Feed</h2>
+                <div class="flex gap-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-slate-400 border border-white/5">FILTER: ALL</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-slate-400 border border-white/5">SORT: LATEST</span>
+                </div>
+            </div>
+
+            <div class="flex-1 glass-panel rounded-xl overflow-hidden flex flex-col shadow-2xl">
+                <div class="grid grid-cols-12 gap-4 p-3 border-b border-white/5 bg-white/[0.02] text-xs font-bold uppercase text-slate-500 tracking-wider">
+                    <div class="col-span-2">Time</div>
+                    <div class="col-span-3">Transaction ID</div>
+                    <div class="col-span-3">Amount</div>
+                    <div class="col-span-3">Status</div>
+                    <div class="col-span-1"></div>
+                </div>
+                <div id="transaction-feed" class="flex-1 overflow-y-auto p-2 space-y-1 scroll-smooth">
+                    </div>
+            </div>
+        </div>
+
+        <div id="right-panel" class="w-[400px] border-l border-border-dark bg-surface-dark relative z-10 shadow-2xl flex flex-col transition-all duration-300">
+            
+            <div id="panel-safe" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-surface-dark z-10 transition-opacity duration-300">
+                <div class="relative size-32 mb-6">
+                    <div class="absolute inset-0 rounded-full border-4 border-success/20 animate-ping"></div>
+                    <div class="absolute inset-0 rounded-full border-2 border-success/40"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-5xl text-success">security</span>
+                    </div>
+                    <div class="absolute inset-0 rounded-full border-t-2 border-success animate-spin"></div>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">System Secure</h3>
+                <p class="text-slate-400 text-sm mb-6">AI Sentinel is actively monitoring transaction streams. No anomalies detected.</p>
+                <div class="w-full bg-black/40 rounded-lg p-4 font-mono text-xs text-left text-success space-y-2 border border-success/10">
+                    <p>> Kafka Stream: CONNECTED</p>
+                    <p>> Model Inference: < 12ms</p>
+                    <p>> Agents: IDLE</p>
+                    <span class="animate-pulse">_</span>
+                </div>
+            </div>
+
+            <div id="panel-alert" class="absolute inset-0 flex flex-col bg-surface-dark z-20 opacity-0 pointer-events-none transition-opacity duration-300">
+                <div class="bg-danger p-6 shadow-lg relative overflow-hidden shrink-0">
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="flex items-center gap-2 font-bold tracking-widest text-white"><span class="material-symbols-outlined animate-pulse">warning</span> FRAUD ALERT</span>
+                            <span class="text-xs bg-black/20 px-2 py-0.5 rounded text-white/80 font-mono">#CRIT-099</span>
+                        </div>
+                        <p class="text-white/80 text-xs font-mono">AI Confidence Score: 98.5%</p>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                    <div class="text-center">
+                        <p class="text-xs text-danger font-bold uppercase tracking-wider mb-1">Transaction Value</p>
+                        <p id="alert-amount" class="text-5xl font-mono font-bold text-white tracking-tighter drop-shadow-lg">$0.00</p>
+                    </div>
+
+                    <div class="glass-panel rounded-lg p-4 flex items-center gap-4">
+                        <div class="size-12 rounded-full bg-slate-700 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-slate-400">person</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase">Account Holder</p>
+                            <p id="alert-user" class="font-bold text-lg">---</p>
+                            <p id="alert-location" class="text-xs text-slate-400 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">location_on</span> ---</p>
+                        </div>
+                    </div>
+
+                    <div class="border border-primary/30 rounded-lg overflow-hidden">
+                        <div class="bg-primary/10 px-3 py-2 border-b border-primary/30 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">psychology</span>
+                            <span class="text-xs font-bold text-primary uppercase">Gemini Analysis</span>
+                        </div>
+                        <div id="ai-content" class="p-4 bg-black/40 font-mono text-xs leading-relaxed text-slate-300">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="p-6 border-t border-border-dark bg-black/20 shrink-0 space-y-3">
+                    <button class="w-full py-3 bg-danger hover:bg-red-600 text-white font-bold rounded shadow-lg shadow-red-900/20 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">lock</span> FREEZE ACCOUNT
+                    </button>
+                    <button onclick="dismissAlert()" class="w-full py-3 bg-transparent border border-slate-600 text-slate-400 hover:text-white hover:bg-white/5 font-bold rounded transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">check_circle</span> DISMISS (FALSE POSITIVE)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- 1. LOGIN LOGIC ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const screen = document.getElementById('login-screen');
+            screen.style.opacity = '0';
+            setTimeout(() => { screen.style.display = 'none'; }, 500);
+            
+            // Connect WebSocket only AFTER login
+            connectWebSocket();
+        }
+
+        // --- 2. MODAL LOGIC ---
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // --- 3. NOTIFICATION LOGIC ---
+        function toggleNotifs() {
+            const el = document.getElementById('notif-dropdown');
+            el.classList.toggle('hidden');
+            el.classList.toggle('flex');
+        }
+
+        // --- 4. PANEL STATE LOGIC ---
+        const panelSafe = document.getElementById('panel-safe');
+        const panelAlert = document.getElementById('panel-alert');
+
+        function triggerFraudAlert(tx) {
+            // Fill Data
+            document.getElementById('alert-amount').innerText = `$${tx.amount.toFixed(2)}`;
+            document.getElementById('alert-user').innerText = tx.user;
+            document.getElementById('alert-location').innerText = tx.location;
+            document.getElementById('ai-content').innerHTML = tx.ai_analysis.replace(/\n/g, '<br>') + '<span class="animate-pulse">_</span>';
+
+            // Switch Views (Fade Effect)
+            panelSafe.style.opacity = '0';
+            panelSafe.style.pointerEvents = 'none';
+            
+            panelAlert.style.opacity = '1';
+            panelAlert.style.pointerEvents = 'auto';
+        }
+
+        function dismissAlert() {
+            // Switch Back
+            panelAlert.style.opacity = '0';
+            panelAlert.style.pointerEvents = 'none';
+            
+            panelSafe.style.opacity = '1';
+            panelSafe.style.pointerEvents = 'auto';
+        }
+
+        // --- 5. WEBSOCKET LOGIC ---
+        let total = 0, fraud = 0, sum = 0;
+
+        function connectWebSocket() {
+            const ws = new WebSocket("ws://localhost:8000/ws");
+            const feed = document.getElementById('transaction-feed');
+
+            ws.onopen = () => console.log("Connected to Backend");
+
+            ws.onmessage = (event) => {
+                const tx = JSON.parse(event.data);
+
+                // Stats
+                total++;
+                sum += tx.amount;
+                if(tx.status === "WARNING") fraud++;
+                
+                document.getElementById('total-processed').innerText = total.toLocaleString();
+                document.getElementById('fraud-detected').innerText = fraud;
+                document.getElementById('avg-tx-value').innerText = "$" + (sum/total).toFixed(2);
+
+                // Render Row
+                const isFraud = tx.status === "WARNING";
+                const row = document.createElement('div');
+                row.className = `grid grid-cols-12 gap-4 p-3 border-b border-white/5 text-sm items-center hover:bg-white/5 transition-colors ${isFraud ? 'bg-danger/10 border-l-2 border-l-danger animate-pulse' : ''}`;
+                row.innerHTML = `
+                    <div class="col-span-2 text-slate-400 font-mono">${tx.time}</div>
+                    <div class="col-span-3 text-slate-300 font-mono">TX-${tx.id}</div>
+                    <div class="col-span-3 font-bold ${isFraud ? 'text-danger' : 'text-white'}">$${tx.amount.toFixed(2)}</div>
+                    <div class="col-span-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm ${isFraud ? 'text-danger' : 'text-success'}">${isFraud ? 'warning' : 'check_circle'}</span>
+                        <span class="text-[10px] font-bold uppercase ${isFraud ? 'text-danger' : 'text-success'}">${isFraud ? 'WARNING' : 'SAFE'}</span>
+                    </div>
+                    <div class="col-span-1 text-right"><span class="material-symbols-outlined text-slate-600 text-sm">more_vert</span></div>
+                `;
+                
+                feed.prepend(row);
+                if(feed.children.length > 20) feed.lastElementChild.remove();
+
+                // Trigger Alert Panel
+                if(isFraud) triggerFraudAlert(tx);
+            };
+        }
+    </script>
+</body>
+</html>
