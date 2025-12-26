@@ -1,11 +1,13 @@
 import json
 import google.generativeai as genai
 from kafka import KafkaConsumer
-
+from dotenv import load_dotenv
+import os
+load_dotenv()       
 # ==========================================
 # 1. SETUP AI CONFIGURATION
 # ==========================================
-API_KEY = "AIzaSyCJWmOE9l73l-wEwtyUtp5STiSPMH457tU"  # <--- PUT YOUR KEY HERE
+API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
